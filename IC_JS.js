@@ -1,6 +1,8 @@
-let Data = [];
+let ClientData = []; //Initializing array for data that is made with Java
+let StockData = []; //Initializing array for data that comes from API request
 $(document).ready(function() {
-    createList();   
+    createClientDataList();  
+    updateStockData(); 
 });
 
 $("#paina").click(function(){
@@ -8,10 +10,14 @@ $("#paina").click(function(){
 })
 $("#table").hide();
 
-function createList(){
+
+/*function: createClientDataList
+description: This function fetches investment data that is made with Java from PHP, function will
+loop through object properties and append to table*/
+function createClientDataList(){
     $.get("https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php", function(data){
         console.log(data);
-        Data = data;
+        ClientData = data;
 
         if(data != null){
             $("#paina").html("Data loaded. Press here");
@@ -26,7 +32,7 @@ function createList(){
                 <td>Volatility</td>`);
                 $("#table").append(row);
     
-                Data.forEach(item => {
+                ClientData.forEach(item => {
                     let vol;
                     if(item.volatility == true && item.type > 0){
                         vol = "Yes";
@@ -51,13 +57,17 @@ function createList(){
     });
 };
 
+/*function: deleteData 
+parameter: id number of selected row
+description: this function deletes data from json file, it will send ID as parameter to PHP
+wich will handle delete*/
 function deleteData(id) {
     const choice = window.confirm("Are you sure you want to delete this data?");
     
     if (choice) {
         console.log("Deleting data for id:", id);
 
-        const dataToDelete = Data.findIndex(item => item.id === id);
+        const dataToDelete = ClientData.findIndex(item => item.id === id);
         console.log("Deleting index: " + dataToDelete);
         
         if (dataToDelete !== -1) {
@@ -77,4 +87,17 @@ function deleteData(id) {
             console.error("Data not found in the array");
         }
     }
+}
+
+/*This function will ask for your API key, that will be sent to server wich will fetch latest data */
+function updateStockData(){
+    const apikey = prompt("Please give your API key");
+    if(apikey == null || apikey == ""){
+        return;
+    }
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
+        console.log(data);
+        StockData = data;
+        createStockData();
+    })
 }
