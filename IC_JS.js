@@ -15,7 +15,7 @@ $("#table").hide();
 description: This function fetches investment data that is made with Java from PHP, function will
 loop through object properties and append to table*/
 function createClientDataList(){
-    $.get("https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php", function(data){
+    $.get("yourURLhere", function(data){
         console.log(data);
         ClientData = data;
 
@@ -73,7 +73,7 @@ function deleteData(id) {
         if (dataToDelete !== -1) {
 
             $.ajax({
-                url: `https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?id=${id}`,
+                url: `yourURLhere?id=${id}`,
                 method: "DELETE",
                 success: function() {
                     console.log("Data deleted successfully");
@@ -95,7 +95,7 @@ function updateStockData(){
     if(apikey == null || apikey == ""){
         return;
     }
-    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
+    $.get(`yourURLhere?apikey=${apikey}`, function(data){
         console.log(data);
         StockData = data;
         createStockData();
