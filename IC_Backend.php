@@ -4,6 +4,7 @@ header('Content-Type: application/json');
 
 $DIRECTORY = 'Data';
 $FILE_PATH = "$DIRECTORY/data.json";
+$FILE_PATH_API = "$DIRECTORY/data_api.json";
 
 $DIRECTORY_INIT = initializeDirectory($DIRECTORY);
 
@@ -13,15 +14,23 @@ if ($DIRECTORY_INIT["Error"]) {
 
 //Select function based on Method
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    postMethod($FILE_PATH); //POST data to JSON
+    postMethod($FILE_PATH); //POST client data to JSON
 }else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    getMethod($FILE_PATH);   //GET JSON data
+    $key = $_GET['apikey'];
+    
+    if($api != null){
+        getDataFromApi($key);
+    }
+    else{
+        getMethod($FILE_PATH);   //GET client data from JSON
+    }
+
 }else if($_SERVER['REQUEST_METHOD'] === 'DELETE'){
-    deleteMethod($FILE_PATH); //DELETE data from JSON
+    deleteMethod($FILE_PATH); //DELETE client data from JSON
 }
 
 
-function initializeDirectory($DIRECTORY) {
+function initializeDirectory() {
     //IF Directory doesnt exist -> make new, if not successful return error, else success
     if (!is_dir($DIRECTORY) && !mkdir($DIRECTORY, 0765, true) ) {
         return ["Error: " => "Failed to create directory!"];
@@ -127,6 +136,39 @@ function deleteMethod($FILE_PATH){
     }
 
 }
+
+function getDataFromApi($key){
+
+    //Symbols for individual stocks and ETF
+    $SYMBOLS = ["TSLA", "AMZN", "MSFT", "AMD", "INTC", "QCOM", "NVDA"];
+    $ETF_SYMBOL = "QDVE.DEX";
+    $DATA_ARRAY = []; //init array for api objects
+
+    //loop symbol array, fetch objects, place to data array
+    foreach($SYMBOLS as $symbol){
+        $url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=$symbol&apikey=$key";
+        $response = file_get_contents($url);
+        $DATA_ARRAY[$symbol] = json_decode($response, true);
+    }
+    
+    //Encode array to JSON
+    $ENCODED_DATA = json_encode($DATA_ARRAY, JSON_PRETTY_PRINT);
+
+    //Place encoded data to file, if successful will call function to fetch JSON to HTML
+    if(file_put_contents($FILE_PATH_API, $ENCODED_DATA)){
+        echo json_encode(["Status" => "Success"]);
+        //getJsonData();
+    }
+    else{
+        echo json_encode(["Status" => "Error occured!"]);
+    }
+
+}
+ 
+
+
+/*"https://www.alphavantage.co/query?function=ETF_PROFILE&symbol=QDVE.DEX&apikey="*/ 
+
 
 
 ?>
