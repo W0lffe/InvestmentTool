@@ -1,8 +1,9 @@
 let ClientData = []; //Initializing array for data that is made with Java
 let StockData = []; //Initializing array for data that comes from API request
 $(document).ready(function() {
-    createClientDataList();  
-    updateStockData(); 
+    createClientDataList();
+    getStockData(); 
+
 });
 
 $("#paina").click(function(){
@@ -15,7 +16,8 @@ $("#table").hide();
 description: This function fetches investment data that is made with Java from PHP, function will
 loop through object properties and append to table*/
 function createClientDataList(){
-    $.get("yourURLhere", function(data){
+    const method = 1;
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         ClientData = data;
 
@@ -32,7 +34,7 @@ function createClientDataList(){
                 <td>Volatility</td>`);
                 $("#table").append(row);
     
-                ClientData.forEach(item => {
+                ClientData.Data.forEach(item => {
                     let vol;
                     if(item.volatility == true && item.type > 0){
                         vol = "Yes";
@@ -73,7 +75,7 @@ function deleteData(id) {
         if (dataToDelete !== -1) {
 
             $.ajax({
-                url: `yourURLhere?id=${id}`,
+                url: `https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?id=${id}`,
                 method: "DELETE",
                 success: function() {
                     console.log("Data deleted successfully");
@@ -90,14 +92,28 @@ function deleteData(id) {
 }
 
 /*This function will ask for your API key, that will be sent to server wich will fetch latest data */
+function getStockData(){
+    const method = 2;
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
+        console.log(data);
+        StockData = data;
+        createStockDataTables();
+    }) 
+
+}
+
 function updateStockData(){
     const apikey = prompt("Please give your API key");
     if(apikey == null || apikey == ""){
         return;
     }
-    $.get(`yourURLhere?apikey=${apikey}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
         console.log(data);
-        StockData = data;
-        createStockData();
+        getStockData();
     })
+}
+
+function createStockDataTables(){
+
+
 }
