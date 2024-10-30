@@ -3,7 +3,7 @@
 header('Content-Type: application/json');
 
 $DIRECTORY = 'Data';
-$FILE_PATH = "$DIRECTORY/data.json";
+$FILE_PATH_CLIENT = "$DIRECTORY/data.json";
 $FILE_PATH_API = "$DIRECTORY/data_api.json";
 
 $DIRECTORY_INIT = initializeDirectory($DIRECTORY);
@@ -14,23 +14,31 @@ if ($DIRECTORY_INIT["Error"]) {
 
 //Select function based on Method
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    postMethod($FILE_PATH); //POST client data to JSON
-}else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    postMethod($FILE_PATH_CLIENT); //POST client data to JSON
+}
+else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $key = $_GET['apikey'];
+    $method = $_GET['method'];
     
-    if($api != null){
-        getDataFromApi($key);
+    if(!empty($key)){
+        getDataFromApi($key, $FILE_PATH_API);
+    }   
+    if($method == 1){
+        getMethod($FILE_PATH_CLIENT, "Client data fetch");   //GET client data from JSON   
     }
-    else{
-        getMethod($FILE_PATH);   //GET client data from JSON
+    else if($method == 2){
+        getMethod($FILE_PATH_API, "API data fetch");   //GET api data from JSON   
     }
+   // getMethod($FILE_PATH_CLIENT, "Client data fetch");   //GET client data from JSON   
+    //getMethod($FILE_PATH_API, "API data fetch");   //GET api data from JSON   
 
-}else if($_SERVER['REQUEST_METHOD'] === 'DELETE'){
-    deleteMethod($FILE_PATH); //DELETE client data from JSON
+}
+else if($_SERVER['REQUEST_METHOD'] === 'DELETE'){
+    deleteMethod($FILE_PATH_CLIENT); //DELETE client data from JSON
 }
 
 
-function initializeDirectory() {
+function initializeDirectory($DIRECTORY) {
     //IF Directory doesnt exist -> make new, if not successful return error, else success
     if (!is_dir($DIRECTORY) && !mkdir($DIRECTORY, 0765, true) ) {
         return ["Error: " => "Failed to create directory!"];
@@ -72,14 +80,14 @@ function postMethod($FILE_PATH) {
     
     // Save new data to file
     if (file_put_contents($FILE_PATH, $NEW_DATA)) {
-        echo json_encode(["Saved data:" => $NEW_DATA]);
+        echo json_encode(["Operation" => "Save data","Status " => "Data saved"]);
     } else {
-        echo json_encode(["Message:" => "Failed to save data"]);
+        echo json_encode(["Operation" => "Save data","Status" => "Failed to save data"]);
     }    
 }
 
 
-function getMethod($FILE_PATH){
+function getMethod($FILE_PATH, $OPERATION){
     if(file_exists($FILE_PATH) ){
         $DATA = file_get_contents($FILE_PATH); //Get contents of file if it exists
 
@@ -87,17 +95,19 @@ function getMethod($FILE_PATH){
         if(!empty($DATA)){
             
             //$DECODED_DATA = json_decode($DATA, true);
-            echo $DATA;
+            echo json_encode(["Operation" => $OPERATION, "Status" => "Success: Data fetched!", "Data" => json_decode($DATA,true)]);
+            //echo $DATA;
             //echo json_encode(["DATA: " => $DECODED_DATA]);
         }
         else{
-            echo json_encode(["status" => "error", "message" => "File is empty!"]);  
+            echo json_encode(["Operation" => $OPERATION, "Status" => "Failed: File is empty!"]);  
         }
     }
     else {
         //echo "Data not found!";
-        echo json_encode(["status" => "error", "message" => "File does not exist!"]);
-    } 
+        echo json_encode(["Operation" => $OPERATION, "Status" => "Failed: File does not exist!"]);
+    }
+    
 }
 
 function deleteMethod($FILE_PATH){
@@ -105,43 +115,48 @@ function deleteMethod($FILE_PATH){
     //Get id that is sent from client
     $id = $_GET['id'];
 
-    //Decode existing data
-    $DECODED_DATA = json_decode(file_get_contents($FILE_PATH), true);
+    if(file_exists($FILE_PATH)){
 
-    //Look for ID from array and set to variable
-    $index = array_search($id, array_column($DECODED_DATA, 'id'));
+        //Decode existing data
+        $DECODED_DATA = json_decode(file_get_contents($FILE_PATH), true);
 
-    //Checks if index IS NOT false
-    if($index !== false){
-        //Delete data from decoded data from this array index
-        array_splice($DECODED_DATA, $index, 1);
+        //Look for ID from array and set to variable
+        $index = array_search($id, array_column($DECODED_DATA, 'id'));
 
-        foreach ($DECODED_DATA as $newID => &$item) {
-            $item['id'] = $newID + 1; // Update the ID directly
-        }
-        //Encode data
-        $ENCODED_DATA = json_encode($DECODED_DATA, JSON_PRETTY_PRINT);
+        //Checks if index IS NOT false
+        if($index !== false){
+            //Delete data from decoded data from this array index
+            array_splice($DECODED_DATA, $index, 1);
 
-        //Write updated data back to file
-        if(file_put_contents($FILE_PATH, $ENCODED_DATA)){
-        echo json_encode(["Saved data:" => $NEW_DATA]);
-        }
+            foreach ($DECODED_DATA as $newID => &$item) {
+                $item['id'] = $newID + 1; // Update the ID directly
+            }
+            //Encode data
+            $ENCODED_DATA = json_encode($DECODED_DATA, JSON_PRETTY_PRINT);
+
+            //Write updated data back to file
+            if(file_put_contents($FILE_PATH, $ENCODED_DATA)){
+            echo json_encode(["Operation" => "Data deletion", "Status" => "Success: New data saved"]);
+            }
+            else{
+            echo json_encode(["Operation" => "Data deletion","Status" => "Failed: New data not saved"]);
+            }
+
+        } 
         else{
-        echo json_encode(["Message:" => "Failed to delete data"]);
+            echo json_encode(["Operation" => "Data deletion", "Status:" => "Failed: ID not found!"]);
         }
-
-    } 
-    else{
-        echo json_encode(["Message:" => "ID not found!"]);
     }
+    else{
+        echo json_encode(["Operation" => "Data deletion", "Status:" => "Failed: File does not exist!"]);
 
+    }
 }
 
-function getDataFromApi($key){
+function getDataFromApi($key, $FILE_PATH){
 
     //Symbols for individual stocks and ETF
-    $SYMBOLS = ["TSLA", "AMZN", "MSFT", "AMD", "INTC", "QCOM", "NVDA"];
-    $ETF_SYMBOL = "QDVE.DEX";
+    $SYMBOLS = ["TSLA", "AMZN", "MSFT", "AMD", "INTC", "QCOM", "NVDA","QDVE.DEX"];
     $DATA_ARRAY = []; //init array for api objects
 
     //loop symbol array, fetch objects, place to data array
@@ -150,25 +165,21 @@ function getDataFromApi($key){
         $response = file_get_contents($url);
         $DATA_ARRAY[$symbol] = json_decode($response, true);
     }
+
+    $status = file_get_contents("https://www.alphavantage.co/query?function=MARKET_STATUS&apikey=$key");
+    $DATA_ARRAY["Status"] = json_decode($status, true);
     
     //Encode array to JSON
     $ENCODED_DATA = json_encode($DATA_ARRAY, JSON_PRETTY_PRINT);
 
     //Place encoded data to file, if successful will call function to fetch JSON to HTML
-    if(file_put_contents($FILE_PATH_API, $ENCODED_DATA)){
-        echo json_encode(["Status" => "Success"]);
-        //getJsonData();
+    if(file_put_contents($FILE_PATH, $ENCODED_DATA)){
+        echo json_encode(["Message" => "Fetch new data","Status" => "Success"]);
     }
     else{
-        echo json_encode(["Status" => "Error occured!"]);
+        echo json_encode(["Message" => "Fetch new data","Status" => "Failed"]);
     }
 
 }
  
-
-
-/*"https://www.alphavantage.co/query?function=ETF_PROFILE&symbol=QDVE.DEX&apikey="*/ 
-
-
-
 ?>
