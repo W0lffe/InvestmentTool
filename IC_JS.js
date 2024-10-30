@@ -6,10 +6,21 @@ $(document).ready(function() {
 
 });
 
-$("#paina").click(function(){
+$("#panel").click(function(){
         $("#table").slideToggle("slow");
 })
 $("#table").hide();
+
+$("#dividerParagraph").click(function(){
+    $("#left_container").slideToggle("slow");
+})
+$("#left_container").hide();
+
+$("#refresh").click(function(){
+    updateStockData();
+})
+
+
 
 
 /*function: createClientDataList
@@ -17,12 +28,12 @@ description: This function fetches investment data that is made with Java from P
 loop through object properties and append to table*/
 function createClientDataList(){
     const method = 1;
-    $.get(`yourURLhere?method=${method}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         ClientData = data;
 
         if(data != null){
-            $("#paina").html("Data loaded. Press here");
+            $("#panel").html("Client data loaded - Press here");
             $("#table").html("");
             const row = $("<tr></tr>").html(`
                 <td>#</td>
@@ -75,7 +86,7 @@ function deleteData(id) {
         if (dataToDelete !== -1) {
 
             $.ajax({
-                url: `yourURLherep?id=${id}`,
+                url: `https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?id=${id}`,
                 method: "DELETE",
                 success: function() {
                     console.log("Data deleted successfully");
@@ -94,12 +105,11 @@ function deleteData(id) {
 /*This function will ask for your API key, that will be sent to server wich will fetch latest data */
 function getStockData(){
     const method = 2;
-    $.get(`yourURLhere?method=${method}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         StockData = data;
         createStockDataTables();
     }) 
-
 }
 
 function updateStockData(){
@@ -107,13 +117,62 @@ function updateStockData(){
     if(apikey == null || apikey == ""){
         return;
     }
-    $.get(`yourURLhere?apikey=${apikey}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
         console.log(data);
         getStockData();
     })
 }
 
 function createStockDataTables(){
+    $("#stocks").html("");
+    $("#left_container").html("");
+    $("#dividerParagraph").html("Market Status");
+    $("#refresh").html("Update Stock Data");
 
+    Object.keys(StockData.Data).forEach(symbol => {
+        const stock = StockData.Data[symbol];
+        const globalQuote = stock["Global Quote"];
+        const stockMarkets = stock["markets"];
+        let invest = "Stock";
 
+        if(symbol != "Status"){
+            const stockSymbol = globalQuote["01. symbol"];
+            const open = parseFloat(globalQuote["02. open"]);
+            const high = parseFloat(globalQuote["03. high"]);
+            const low = parseFloat(globalQuote["04. low"]);
+            const price = parseFloat(globalQuote["05. price"]);
+            const day = globalQuote["07. latest trading day"];
+            const close = parseFloat(globalQuote["08. previous close"]);
+            const change = parseFloat(globalQuote["10. change percent"]);
+            if(symbol == "QDVE.DEX"){
+                invest = "ETF";
+            }
+            const div = $(`<div class="stock"></div>`).html(`
+                <h4>${invest}: ${stockSymbol}</h4>
+                <p>Open: ${open.toFixed(2)}</p>
+                <p>High: ${high.toFixed(2)}</p>
+                <p>Low: ${low.toFixed(2)}</p>
+                <p>Price: ${price.toFixed(2)}</p>
+                <p>Latest trading day: ${day}</p>
+                <p>Close: ${close.toFixed(2)}</p>
+                <p>Change: ${change.toFixed(2)}%</p>`
+            );
+            $("#stocks").append(div);
+        }
+        else if(symbol == "Status"){
+            const markets = ["United States", "Germany", "United Kingdom", "Canada", "Japan"];
+            for(let i = 0; i < markets.length; i++){
+                const foundMarket = stockMarkets.find(market => market.region === markets[i]);
+
+                const div = $(`<div class="status"></div>`).html(`
+                    <h4>Country: ${foundMarket.region}</h4>
+                    <p>Exchanges: ${foundMarket.primary_exchanges}</p>
+                    <p>Open (local): ${foundMarket.local_open}</p>
+                    <p>Close (local): ${foundMarket.local_close}</p>
+                    <p>Current: ${foundMarket.current_status}</p>
+                    `);
+                $("#left_container").append(div);
+            } 
+        }
+    })
 }
