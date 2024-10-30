@@ -17,7 +17,7 @@ description: This function fetches investment data that is made with Java from P
 loop through object properties and append to table*/
 function createClientDataList(){
     const method = 1;
-    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
+    $.get(`yourURLhere?method=${method}`, function(data){
         console.log(data);
         ClientData = data;
 
@@ -75,7 +75,7 @@ function deleteData(id) {
         if (dataToDelete !== -1) {
 
             $.ajax({
-                url: `https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?id=${id}`,
+                url: `yourURLherep?id=${id}`,
                 method: "DELETE",
                 success: function() {
                     console.log("Data deleted successfully");
@@ -94,7 +94,7 @@ function deleteData(id) {
 /*This function will ask for your API key, that will be sent to server wich will fetch latest data */
 function getStockData(){
     const method = 2;
-    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
+    $.get(`yourURLhere?method=${method}`, function(data){
         console.log(data);
         StockData = data;
         createStockDataTables();
@@ -107,7 +107,7 @@ function updateStockData(){
     if(apikey == null || apikey == ""){
         return;
     }
-    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
+    $.get(`yourURLhere?apikey=${apikey}`, function(data){
         console.log(data);
         getStockData();
     })
