@@ -4,7 +4,7 @@ Date: 31.10.2024
 Version: 1.0
 
 Brief: This program is designed to be an simplified
-user interface/display for my Java app "Intrest Calculator".
+user interface/display for my Java app "InvestmentTool".
 This program utilizes jQuery and vanilla Javascript.
 
 This software is under GPL License.
