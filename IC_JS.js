@@ -1,8 +1,22 @@
+/*File: IC_JS.js
+Author: Henry Karppinen
+Date: 31.10.2024
+Version: 1.0
+
+Brief: This program is designed to be an simplified
+user interface/display for my Java app "Intrest Calculator".
+This program utilizes jQuery and vanilla Javascript.
+
+This software is under GPL License.
+*/
+
+
 let ClientData = []; //Initializing array for data that is made with Java
 let StockData = []; //Initializing array for data that comes from API request
+
 $(document).ready(function() {
-    createClientDataList();
-    getStockData(); 
+    createClientDataList(); //when opening html, creates table with client data
+    getStockData();  // creates div elements with stock data
 
 });
 
@@ -21,14 +35,12 @@ $("#refresh").click(function(){
 })
 
 
-
-
 /*function: createClientDataList
 description: This function fetches investment data that is made with Java from PHP, function will
 loop through object properties and append to table*/
 function createClientDataList(){
-    const method = 1;
-    $.get(`yourULRhere?method=${method}`, function(data){
+    const method = 1; //method for PHP, gets client data from JSON file
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         ClientData = data;
 
@@ -62,7 +74,7 @@ function createClientDataList(){
                     <td>${item.afterIntrest.toFixed(2)}€</td>
                     <td>${item.earnings.toFixed(2)}€</td>
                     <td>${vol}</td>
-                    <td> <button id="deleteButton" onclick="deleteData(${id})">Delete</button>
+                    <td> <button id="deleteButton" onclick="deleteData(${id})">Delete Entry</button>
                     `);
                     $("#table").append(row);
                 });
@@ -86,7 +98,7 @@ function deleteData(id) {
         if (dataToDelete !== -1) {
 
             $.ajax({
-                url: `yourULRhere?id=${id}`,
+                url: `https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?id=${id}`,
                 method: "DELETE",
                 success: function() {
                     console.log("Data deleted successfully");
@@ -102,37 +114,49 @@ function deleteData(id) {
     }
 }
 
-/*This function will ask for your API key, that will be sent to server wich will fetch latest data */
+/*function: getStockData
+description: This function will send a method to PHP wich will fetch latest data from api
+and return back here. This function will call createStockDataTable to handle the new data*/
 function getStockData(){
-    const method = 2;
-    $.get(`yourULRhere?method=${method}`, function(data){
+    const method = 2; //method for PHP, gets API data from JSON file
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         StockData = data;
         createStockDataTables();
     }) 
 }
 
+/*function: getStockData
+description: This function will send a method to PHP wich will fetch latest data from api
+and return back here. This function will call getStockData after fetching new data*/
 function updateStockData(){
     const apikey = prompt("Please give your API key");
     if(apikey == null || apikey == ""){
         return;
     }
-    $.get(`yourULRhere?apikey=${apikey}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
         console.log(data);
         getStockData();
     })
 }
 
+
+/*function: createStockDataTables
+description: This function handles the API data by looping through
+array, creating div elements and appending data paragraphs to div elements */
 function createStockDataTables(){
     $("#stocks").html("");
     $("#left_container").html("");
     $("#dividerParagraph").html("Market Status");
     $("#refresh").html("Update Stock Data");
 
+
+    //StockData.Data(ARRAY) => StockData.Data.Symbol => StockData.Data.Symbol["Global Quote"]=> Access to object properties
+    //Object keys takes Array(StockData.Data) wich has symbols, and converts symbols to enum
     Object.keys(StockData.Data).forEach(symbol => {
-        const stock = StockData.Data[symbol];
-        const globalQuote = stock["Global Quote"];
-        const stockMarkets = stock["markets"];
+        const stock = StockData.Data[symbol]; //StockData.Data.Symbol
+        const globalQuote = stock["Global Quote"]; //StockData.Data.Symbol["Global Quote"]
+        const stockMarkets = stock["markets"]; //StockData.Data.Symbol["markets"]
         let invest = "Stock";
 
         if(symbol != "Status"){
@@ -147,6 +171,7 @@ function createStockDataTables(){
             if(symbol == "QDVE.DEX"){
                 invest = "ETF";
             }
+            //Create div with stock data
             const div = $(`<div class="stock"></div>`).html(`
                 <h4>${invest}: ${stockSymbol}</h4>
                 <p>Open: ${open.toFixed(2)}</p>
@@ -155,8 +180,15 @@ function createStockDataTables(){
                 <p>Price: ${price.toFixed(2)}</p>
                 <p>Latest trading day: ${day}</p>
                 <p>Close: ${close.toFixed(2)}</p>
-                <p>Change: ${change.toFixed(2)}%</p>`
+                <p id="changeParagraph">Change: ${change.toFixed(2)}%</p>`
             );
+            if(change > 0){
+                div.find("#changeParagraph").css("color", "green");
+            }
+            else{
+                div.find("#changeParagraph").css("color", "red");
+            }
+            
             $("#stocks").append(div);
         }
         else if(symbol == "Status"){
@@ -164,6 +196,7 @@ function createStockDataTables(){
             for(let i = 0; i < markets.length; i++){
                 const foundMarket = stockMarkets.find(market => market.region === markets[i]);
 
+                //create div with market status data
                 const div = $(`<div class="status"></div>`).html(`
                     <h4>Country: ${foundMarket.region}</h4>
                     <p>Exchanges: ${foundMarket.primary_exchanges}</p>
