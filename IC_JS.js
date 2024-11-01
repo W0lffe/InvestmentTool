@@ -4,7 +4,7 @@ Date: 31.10.2024
 Version: 1.0
 
 Brief: This program is designed to be an simplified
-user interface/display for my Java app "InvestmentTool".
+user interface/display for my Java app "Intrest Calculator".
 This program utilizes jQuery and vanilla Javascript.
 
 This software is under GPL License.
@@ -40,7 +40,7 @@ description: This function fetches investment data that is made with Java from P
 loop through object properties and append to table*/
 function createClientDataList(){
     const method = 1; //method for PHP, gets client data from JSON file
-    $.get(`yourURLhere?method=${method}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         ClientData = data;
 
@@ -92,17 +92,17 @@ function deleteData(id) {
     if (choice) {
         console.log("Deleting data for id:", id);
 
-        const dataToDelete = ClientData.findIndex(item => item.id === id);
+        const dataToDelete = ClientData.Data.findIndex(item => item.id === id);
         console.log("Deleting index: " + dataToDelete);
         
         if (dataToDelete !== -1) {
 
             $.ajax({
-                url: `yourURLhere?id=${id}`,
+                url: `https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?id=${id}`,
                 method: "DELETE",
                 success: function() {
                     console.log("Data deleted successfully");
-                    setTimeout(() => { createList(); }, 1000);
+                    setTimeout(() => { createClientDataList(); }, 1000); //Update client data list
                 },
                 error: function(xhr, error) {
                     console.error("Failed to delete data on the server:", xhr, error);
@@ -119,7 +119,7 @@ description: This function will send a method to PHP wich will fetch latest data
 and return back here. This function will call createStockDataTable to handle the new data*/
 function getStockData(){
     const method = 2; //method for PHP, gets API data from JSON file
-    $.get(`yourURLhere?method=${method}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?method=${method}`, function(data){
         console.log(data);
         StockData = data;
         createStockDataTables();
@@ -134,7 +134,7 @@ function updateStockData(){
     if(apikey == null || apikey == ""){
         return;
     }
-    $.get(`yourURLhere?apikey=${apikey}`, function(data){
+    $.get(`https://www.cc.puv.fi/~e2301740/IC_Backend/IC_Backend.php?apikey=${apikey}`, function(data){
         console.log(data);
         getStockData();
     })
